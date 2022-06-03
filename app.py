@@ -63,8 +63,6 @@ def get_category(my_dict, categories):
     if isinstance(objects, dict):
         objects = [objects]
 
-    my_category = []
-
     for o in objects:
         category = o["name"]
 
@@ -86,25 +84,18 @@ def get_category(my_dict, categories):
                 "supercategory": supercategory
             })
 
-            my_category.append({
-                "id": cat_id,
-                "name": category,
-                "supercategory": supercategory
-            })
-    
-
-    return categories, my_category
+    return categories
     
 
 
-def execute_file(i, outputdir, categories, images, annotations):
-    img = Image.open(imgs_list[i])
+def execute_file(imgfile, xmlfile, outputdir, categories, images, annotations):
+    img = Image.open(imgfile)
 
-    with open(xmls_list[i], 'r', encoding='utf-8') as file:
+    with open(xmlfile, 'r', encoding='utf-8') as file:
         my_xml = file.read()
         my_dict = xmltodict.parse(my_xml)
 
-        categories, my_category = get_category(my_dict, categories)
+        categories = get_category(my_dict, categories)
         img_id = 0 if not images else max(x['id'] for x in images) +1
 
         img, annotations = resize(img, my_dict, img_id, annotations, categories)
@@ -120,14 +111,9 @@ def execute_file(i, outputdir, categories, images, annotations):
         img.save(path)
 
     return categories, images, annotations
-        
-
-if __name__=='__main__':
-    imagedir = "./images"
-    xmldir = "./xmldata"
-    outputdir = "./output"
 
 
+def main(imagedir, xmldir, outputdir):
     imgs_list = glob.glob(os.path.join(imagedir, "*.jpg"))
     xmls_list = glob.glob(os.path.join(xmldir, "*.xml"))
 
@@ -136,7 +122,7 @@ if __name__=='__main__':
     annotations = []
 
     for i in range(len(imgs_list)):
-        categories, images, annotations = execute_file(i, outputdir, categories, images, annotations)
+        categories, images, annotations = execute_file(imgs_list[i], xmls_list[i], outputdir, categories, images, annotations)
 
     res = {
         "categories": categories,
@@ -148,4 +134,13 @@ if __name__=='__main__':
     with open(path, "w") as  outpath:
         json.dump(res, outpath)
 
+        
+
+if __name__=='__main__':
+    imagedir = "./images"
+    xmldir = "./xmldata"
+    outputdir = "./output"
+
+    main(imagedir, xmldir, outputdir)
+    
     
